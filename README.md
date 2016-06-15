@@ -12,6 +12,8 @@ Features
 
 * AJAX powered sign up form
 * Sendy installation does not have to be on the same server
+* Verifies if cURL is setup
+* Allows the user to setup if a self-signed certificate is being used when communicating with Sendy 
 
 Set up requirements
 -------------------

@@ -55,11 +55,11 @@ class Sendynewsletter extends Module
 		$this->error = false;
 		$this->valid = false;
 		$this->_files = array(
-			'name' => array('newsletter_conf', 'newsletter_voucher'),
-			'ext' => array(
-				0 => 'html',
-				1 => 'txt'
-			)
+				'name' => array('newsletter_conf', 'newsletter_voucher'),
+				'ext' => array(
+						0 => 'html',
+						1 => 'txt'
+				)
 		);
 
 		$this->_searched_email = null;
@@ -80,35 +80,35 @@ class Sendynewsletter extends Module
 
 			// And filling fields to show !
 			$this->fields_export = array(
-				'COUNTRY' => array(
-					'title' => $this->l('Customers\' country'),
-					'desc' => $this->l('Filter customers\' country.'),
-					'type' => 'select',
-					'value' => $countries_list,
-					'value_default' => 0
-				),
-				'SUSCRIBERS' => array(
-					'title' => $this->l('Newsletter subscribers'),
-					'desc' => $this->l('Filter newsletter subscribers.'),
-					'type' => 'select',
-					'value' => array(
-						0 => $this->l('All customers'),
-						2 => $this->l('Subscribers'),
-						1 => $this->l('Non-subscribers')
+					'COUNTRY' => array(
+							'title' => $this->l('Customers\' country'),
+							'desc' => $this->l('Filter customers\' country.'),
+							'type' => 'select',
+							'value' => $countries_list,
+							'value_default' => 0
 					),
-					'value_default' => 2
-				),
-				'OPTIN' => array(
-					'title' => $this->l('Opted-in subscribers'),
-					'desc' => $this->l('Filter opted-in subscribers.'),
-					'type' => 'select',
-					'value' => array(
-						0 => $this->l('All customers'),
-						2 => $this->l('Subscribers'),
-						1 => $this->l('Non-subscribers')
+					'SUSCRIBERS' => array(
+							'title' => $this->l('Newsletter subscribers'),
+							'desc' => $this->l('Filter newsletter subscribers.'),
+							'type' => 'select',
+							'value' => array(
+									0 => $this->l('All customers'),
+									2 => $this->l('Subscribers'),
+									1 => $this->l('Non-subscribers')
+							),
+							'value_default' => 2
 					),
-					'value_default' => 0
-				),
+					'OPTIN' => array(
+							'title' => $this->l('Opted-in subscribers'),
+							'desc' => $this->l('Filter opted-in subscribers.'),
+							'type' => 'select',
+							'value' => array(
+									0 => $this->l('All customers'),
+									2 => $this->l('Subscribers'),
+									1 => $this->l('Non-subscribers')
+							),
+							'value_default' => 0
+					),
 			);
 		}
 	}
@@ -118,7 +118,7 @@ class Sendynewsletter extends Module
 		if (!parent::install() || !Configuration::updateValue('PS_NEWSLETTER_RAND', rand().rand()) || !$this->registerHook(array('header', 'footer', 'actionCustomerAccountAdd')))
 			return false;
 
-		Configuration::updateValue('NW_SALT', Tools::passwdGen(16));
+		Configuration::updateValue('SNB_SALT', Tools::passwdGen(16));
 
 		return Db::getInstance()->execute('
 		CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'sendynewsletter` (
@@ -145,31 +145,18 @@ class Sendynewsletter extends Module
 	{
 		if (Tools::isSubmit('submitUpdate'))
 		{
-			Configuration::updateValue('NW_CONFIRMATION_EMAIL', (bool)Tools::getValue('NW_CONFIRMATION_EMAIL'));
-			Configuration::updateValue('NW_VERIFICATION_EMAIL', (bool)Tools::getValue('NW_VERIFICATION_EMAIL'));
+			Configuration::updateValue('SNB_CONFIRMATION_EMAIL', (bool)Tools::getValue('SNB_CONFIRMATION_EMAIL'));
+			Configuration::updateValue('SNB_VERIFICATION_EMAIL', (bool)Tools::getValue('SNB_VERIFICATION_EMAIL'));
+			Configuration::updateValue('SNB_SELFSIGNED_CERTIFICATE', (bool)Tools::getValue('SNB_SELFSIGNED_CERTIFICATE'));
+			Configuration::updateValue('SNB_INSTALLATION_PATH', Tools::getValue('SNB_INSTALLATION_PATH'));
+			Configuration::updateValue('SNB_SUBSCRIBER_LIST', Tools::getValue('SNB_SUBSCRIBER_LIST'));
 
-			$installation = Tools::getValue('NW_INSTALLATION_PATH');
-			if (empty($installation) && !Validate::isAbsoluteUrl($installation))
-				$this->_html .= $this->displayError($this->l('Invalid installation url'));
-			else
-			{
-				Configuration::updateValue('NW_INSTALLATION_PATH', (bool)Tools::getValue('NW_INSTALLATION_PATH'));
-			}
-
-			$list = Tools::getValue('NW_SUBSCRIBER_LIST');
-			if (empty($list) && !Validate::isGenericName($list))
-				$this->_html .= $this->displayError($this->l('Invalid list'));
-			else
-			{
-				Configuration::updateValue('NW_SUBSCRIBER_LIST', (bool)Tools::getValue('NW_SUBSCRIBER_LIST'));
-			}
-
-			$voucher = Tools::getValue('NW_VOUCHER_CODE');
+			$voucher = Tools::getValue('SNB_VOUCHER_CODE');
 			if ($voucher && !Validate::isDiscountName($voucher))
 				$this->_html .= $this->displayError($this->l('The voucher code is invalid.'));
 			else
 			{
-				Configuration::updateValue('NW_VOUCHER_CODE', pSQL($voucher));
+				Configuration::updateValue('SNB_VOUCHER_CODE', pSQL($voucher));
 				$this->_html .= $this->displayConfirmation($this->l('Settings updated'));
 			}
 		}
@@ -210,41 +197,41 @@ class Sendynewsletter extends Module
 	{
 		$fields_list = array(
 
-			'id' => array(
-				'title' => $this->l('ID'),
-				'search' => false,
-			),
-			'shop_name' => array(
-				'title' => $this->l('Shop'),
-				'search' => false,
-			),
-			'gender' => array(
-				'title' => $this->l('Gender'),
-				'search' => false,
-			),
-			'lastname' => array(
-				'title' => $this->l('Lastname'),
-				'search' => false,
-			),
-			'firstname' => array(
-				'title' => $this->l('Firstname'),
-				'search' => false,
-			),
-			'email' => array(
-				'title' => $this->l('Email'),
-				'search' => false,
-			),
-			'subscribed' => array(
-				'title' => $this->l('Subscribed'),
-				'type' => 'bool',
-				'active' => 'subscribed',
-				'search' => false,
-			),
-			'newsletter_date_add' => array(
-				'title' => $this->l('Subscribed on'),
-				'type' => 'date',
-				'search' => false,
-			)
+				'id' => array(
+						'title' => $this->l('ID'),
+						'search' => false,
+				),
+				'shop_name' => array(
+						'title' => $this->l('Shop'),
+						'search' => false,
+				),
+				'gender' => array(
+						'title' => $this->l('Gender'),
+						'search' => false,
+				),
+				'lastname' => array(
+						'title' => $this->l('Lastname'),
+						'search' => false,
+				),
+				'firstname' => array(
+						'title' => $this->l('Firstname'),
+						'search' => false,
+				),
+				'email' => array(
+						'title' => $this->l('Email'),
+						'search' => false,
+				),
+				'subscribed' => array(
+						'title' => $this->l('Subscribed'),
+						'type' => 'bool',
+						'active' => 'subscribed',
+						'search' => false,
+				),
+				'newsletter_date_add' => array(
+						'title' => $this->l('Subscribed on'),
+						'type' => 'date',
+						'search' => false,
+				)
 		);
 
 		if (!Configuration::get('PS_MULTISHOP_FEATURE_ACTIVE'))
@@ -289,9 +276,9 @@ class Sendynewsletter extends Module
 	public function displayViewCustomerLink($token = null, $id, $name = null)
 	{
 		$this->smarty->assign(array(
-			'href' => 'index.php?controller=AdminCustomers&id_customer='.(int)$id.'&updatecustomer&token='.Tools::getAdminTokenLite('AdminCustomers'),
-			'action' => $this->l('View'),
-			'disable' => !((int)$id > 0),
+				'href' => 'index.php?controller=AdminCustomers&id_customer='.(int)$id.'&updatecustomer&token='.Tools::getAdminTokenLite('AdminCustomers'),
+				'action' => $this->l('View'),
+				'disable' => !((int)$id > 0),
 		));
 
 		return $this->display(__FILE__, 'views/templates/admin/list_action_viewcustomer.tpl');
@@ -300,9 +287,9 @@ class Sendynewsletter extends Module
 	public function displayEnableLink($token, $id, $value, $active, $id_category = null, $id_product = null, $ajax = false)
 	{
 		$this->smarty->assign(array(
-			'ajax' => $ajax,
-			'enabled' => (bool)$value,
-			'url_enable' => $this->_helperlist->currentIndex.'&'.$this->_helperlist->identifier.'='.$id.'&'.$active.$this->_helperlist->table.($ajax ? '&action='.$active.$this->_helperlist->table.'&ajax='.(int)$ajax : '').((int)$id_category && (int)$id_product ? '&id_category='.(int)$id_category : '').'&token='.$token
+				'ajax' => $ajax,
+				'enabled' => (bool)$value,
+				'url_enable' => $this->_helperlist->currentIndex.'&'.$this->_helperlist->identifier.'='.$id.'&'.$active.$this->_helperlist->table.($ajax ? '&action='.$active.$this->_helperlist->table.'&ajax='.(int)$ajax : '').((int)$id_category && (int)$id_product ? '&id_category='.(int)$id_category : '').'&token='.$token
 		));
 
 		return $this->display(__FILE__, 'views/templates/admin/list_action_enable.tpl');
@@ -311,8 +298,8 @@ class Sendynewsletter extends Module
 	public function displayUnsubscribeLink($token = null, $id, $name = null)
 	{
 		$this->smarty->assign(array(
-			'href' => $this->_helperlist->currentIndex.'&subscribedcustomer&'.$this->_helperlist->identifier.'='.$id.'&token='.$token,
-			'action' => $this->l('Unsubscribe'),
+				'href' => $this->_helperlist->currentIndex.'&subscribedcustomer&'.$this->_helperlist->identifier.'='.$id.'&token='.$token,
+				'action' => $this->l('Unsubscribe'),
 		));
 
 		return $this->display(__FILE__, 'views/templates/admin/list_action_unsubscribe.tpl');
@@ -383,7 +370,7 @@ class Sendynewsletter extends Module
 			$email = pSQL($_POST['email']);
 			if (!$this->isRegistered($register_status))
 			{
-				if (Configuration::get('NW_VERIFICATION_EMAIL'))
+				if (Configuration::get('SNB_VERIFICATION_EMAIL'))
 				{
 					// create an unactive entry in the newsletter database
 					if ($register_status == self::GUEST_NOT_REGISTERED)
@@ -403,10 +390,10 @@ class Sendynewsletter extends Module
 					else
 						return $this->error = $this->l('An error occurred during the subscription process.');
 
-					if ($code = Configuration::get('NW_VOUCHER_CODE'))
+					if ($code = Configuration::get('SNB_VOUCHER_CODE'))
 						$this->sendVoucher($email, $code);
 
-					if (Configuration::get('NW_CONFIRMATION_EMAIL'))
+					if (Configuration::get('SNB_CONFIRMATION_EMAIL'))
 						$this->sendConfirmationEmail($email);
 				}
 			}
@@ -460,8 +447,8 @@ class Sendynewsletter extends Module
 	protected function isRegistered($register_status)
 	{
 		return in_array(
-			$register_status,
-			array(self::GUEST_REGISTERED, self::CUSTOMER_REGISTERED)
+				$register_status,
+				array(self::GUEST_REGISTERED, self::CUSTOMER_REGISTERED)
 		);
 	}
 
@@ -506,12 +493,16 @@ class Sendynewsletter extends Module
 	 */
 	protected function registerUser($email)
 	{
-		$sql = 'UPDATE '._DB_PREFIX_.'customer
-				SET `newsletter` = 1, newsletter_date_add = NOW(), `ip_registration_newsletter` = \''.pSQL(Tools::getRemoteAddr()).'\'
-				WHERE `email` = \''.pSQL($email).'\'
-				AND id_shop = '.$this->context->shop->id;
+		if($this->sendyListSubscribeUser($email))
+		{
+			$sql = 'UPDATE ' . _DB_PREFIX_ . 'customer
+				SET `newsletter` = 1, newsletter_date_add = NOW(), `ip_registration_newsletter` = \'' . pSQL(Tools::getRemoteAddr()) . '\'
+				WHERE `email` = \'' . pSQL($email) . '\'
+				AND id_shop = ' . $this->context->shop->id;
 
-		return Db::getInstance()->execute($sql) && $this->sendyListSubscribeUser($email);
+			return Db::getInstance()->execute($sql);
+		}
+		return false;
 
 
 	}
@@ -526,23 +517,27 @@ class Sendynewsletter extends Module
 	 */
 	protected function registerGuest($email, $active = true)
 	{
-		$sql = 'INSERT INTO '._DB_PREFIX_.'sendynewsletter (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
+		if($this->sendyListSubscribeGuest($email, $active))
+		{
+			$sql = 'INSERT INTO ' . _DB_PREFIX_ . 'sendynewsletter (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
 				VALUES
-				('.$this->context->shop->id.',
-				'.$this->context->shop->id_shop_group.',
-				\''.pSQL($email).'\',
+				(' . $this->context->shop->id . ',
+				' . $this->context->shop->id_shop_group . ',
+				\'' . pSQL($email) . '\',
 				NOW(),
-				\''.pSQL(Tools::getRemoteAddr()).'\',
+				\'' . pSQL(Tools::getRemoteAddr()) . '\',
 				(
 					SELECT c.http_referer
-					FROM '._DB_PREFIX_.'connections c
-					WHERE c.id_guest = '.(int)$this->context->customer->id.'
+					FROM ' . _DB_PREFIX_ . 'connections c
+					WHERE c.id_guest = ' . (int)$this->context->customer->id . '
 					ORDER BY c.date_add DESC LIMIT 1
 				),
-				'.(int)$active.'
+				' . (int)$active . '
 				)';
 
-		return Db::getInstance()->execute($sql) && $this->sendyListSubscribeGuest($email, $active);
+			return Db::getInstance()->execute($sql);
+		}
+		return false;
 	}
 
 
@@ -550,7 +545,7 @@ class Sendynewsletter extends Module
 	{
 		$this->sendyActivateUser($email);
 		return Db::getInstance()->execute(
-			'UPDATE `'._DB_PREFIX_.'sendynewsletter`
+				'UPDATE `'._DB_PREFIX_.'sendynewsletter`
 						SET `active` = 1
 						WHERE `email` = \''.pSQL($email).'\''
 		);
@@ -567,7 +562,7 @@ class Sendynewsletter extends Module
 	{
 		$sql = 'SELECT `email`
 				FROM `'._DB_PREFIX_.'sendynewsletter`
-				WHERE MD5(CONCAT( `email` , `newsletter_date_add`, \''.pSQL(Configuration::get('NW_SALT')).'\')) = \''.pSQL($token).'\'
+				WHERE MD5(CONCAT( `email` , `newsletter_date_add`, \''.pSQL(Configuration::get('SNB_SALT')).'\')) = \''.pSQL($token).'\'
 				AND `active` = 0';
 
 		return Db::getInstance()->getValue($sql);
@@ -584,7 +579,7 @@ class Sendynewsletter extends Module
 	{
 		$sql = 'SELECT `email`
 				FROM `'._DB_PREFIX_.'customer`
-				WHERE MD5(CONCAT( `email` , `date_add`, \''.pSQL(Configuration::get('NW_SALT')).'\')) = \''.pSQL($token).'\'
+				WHERE MD5(CONCAT( `email` , `date_add`, \''.pSQL(Configuration::get('SNB_SALT')).'\')) = \''.pSQL($token).'\'
 				AND `newsletter` = 0';
 
 		return Db::getInstance()->getValue($sql);
@@ -600,14 +595,14 @@ class Sendynewsletter extends Module
 	{
 		if (in_array($register_status, array(self::GUEST_NOT_REGISTERED, self::GUEST_REGISTERED)))
 		{
-			$sql = 'SELECT MD5(CONCAT( `email` , `newsletter_date_add`, \''.pSQL(Configuration::get('NW_SALT')).'\')) as token
+			$sql = 'SELECT MD5(CONCAT( `email` , `newsletter_date_add`, \''.pSQL(Configuration::get('SNB_SALT')).'\')) as token
 					FROM `'._DB_PREFIX_.'sendynewsletter`
 					WHERE `active` = 0
 					AND `email` = \''.pSQL($email).'\'';
 		}
 		else if ($register_status == self::CUSTOMER_NOT_REGISTERED)
 		{
-			$sql = 'SELECT MD5(CONCAT( `email` , `date_add`, \''.pSQL(Configuration::get('NW_SALT')).'\' )) as token
+			$sql = 'SELECT MD5(CONCAT( `email` , `date_add`, \''.pSQL(Configuration::get('SNB_SALT')).'\' )) as token
 					FROM `'._DB_PREFIX_.'customer`
 					WHERE `newsletter` = 0
 					AND `email` = \''.pSQL($email).'\'';
@@ -635,10 +630,10 @@ class Sendynewsletter extends Module
 		if (!$activated)
 			return $this->l('This email is already registered and/or invalid.');
 
-		if ($discount = Configuration::get('NW_VOUCHER_CODE'))
+		if ($discount = Configuration::get('SNB_VOUCHER_CODE'))
 			$this->sendVoucher($email, $discount);
 
-		if (Configuration::get('NW_CONFIRMATION_EMAIL'))
+		if (Configuration::get('SNB_CONFIRMATION_EMAIL'))
 			$this->sendConfirmationEmail($email);
 
 		return $this->l('Thank you for subscribing to our newsletter.');
@@ -646,13 +641,13 @@ class Sendynewsletter extends Module
 
 	public function sendyActivateUser($email)
 	{
-		$list = Configuration::get('NW_SUBSCRIBER_LIST');
-		$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+		$list = Configuration::get('SNB_SUBSCRIBER_LIST');
+		$url = Configuration::get('SNB_INSTALLATION_PATH') . '/subscribe';
 
 		if(!empty($list) && !empty($url))
 		{
-			$list = Configuration::get('NW_SUBSCRIBER_LIST');
-			$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+			$list = Configuration::get('SNB_SUBSCRIBER_LIST');
+			$url = Configuration::get('SNB_INSTALLATION_PATH') . '/subscribe';
 
 			$data = array(
 					'list' => $list,
@@ -660,12 +655,26 @@ class Sendynewsletter extends Module
 					'boolean' => 'true',
 			);
 
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-			curl_exec($ch);
+			if($this->isCurlActive()) {
+
+				$ch = curl_init();
+				if (Configuration::get('SNB_SELFSIGNED_CERTIFICATE'))
+				{
+					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+				}
+				curl_setopt($ch, CURLOPT_URL, $url);
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+				if (curl_exec($ch))
+					return true;
+				else
+					die(curl_error($ch));
+			}
+			else
+				die('cURL is not installed!');
 		}
+		return false;
 	}
 
 	/**
@@ -677,8 +686,8 @@ class Sendynewsletter extends Module
 
 	public function sendyListSubscribeUser($email, $active = true)
 	{
-		$list = Configuration::get('NW_SUBSCRIBER_LIST');
-		$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+		$list = Configuration::get('SNB_SUBSCRIBER_LIST');
+		$url = Configuration::get('SNB_INSTALLATION_PATH') . '/subscribe';
 
 		if(!empty($list) && !empty($url))
 		{
@@ -695,12 +704,26 @@ class Sendynewsletter extends Module
 					'boolean' => $active,
 			);
 
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-			curl_exec($ch);
+			if($this->isCurlActive()) {
+
+				$ch = curl_init();
+				if (Configuration::get('SNB_SELFSIGNED_CERTIFICATE'))
+				{
+					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+				}
+				curl_setopt($ch, CURLOPT_URL, $url);
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+				if (curl_exec($ch))
+					return true;
+				else
+					die(curl_error($ch));
+			}
+			else
+				die('cURL is not installed!');
 		}
+		return false;
 	}
 
 	/**
@@ -713,13 +736,13 @@ class Sendynewsletter extends Module
 	public function sendyListSubscribeGuest($email,  $active = true)
 	{
 
-		$list = Configuration::get('NW_SUBSCRIBER_LIST');
-		$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+		$list = Configuration::get('SNB_SUBSCRIBER_LIST');
+		$url = Configuration::get('SNB_INSTALLATION_PATH') . '/subscribe';
 
 		if(!empty($list) && !empty($url))
 		{
-			$list = Configuration::get('NW_SUBSCRIBER_LIST');
-			$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+			$list = Configuration::get('SNB_SUBSCRIBER_LIST');
+			$url = Configuration::get('SNB_INSTALLATION_PATH') . '/subscribe';
 
 			$data = array(
 					'list' => $list,
@@ -727,19 +750,32 @@ class Sendynewsletter extends Module
 					'boolean' => $active,
 			);
 
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-			curl_exec($ch);
-		}
+			if($this->isCurlActive()) {
 
+				$ch = curl_init();
+				if (Configuration::get('SNB_SELFSIGNED_CERTIFICATE'))
+				{
+					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+				}
+				curl_setopt($ch, CURLOPT_URL, $url);
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+				if (curl_exec($ch))
+					return true;
+				else
+					die(curl_error($ch));
+			}
+			else
+				die('cURL is not installed!');
+		}
+		return false;
 	}
 
 	public function sendyListUnsubscribe($email)
 	{
-		$list = Configuration::get('NW_SUBSCRIBER_LIST');
-		$url = Configuration::get('NW_INSTALLATION_PATH') . '/unsubscribe';
+		$list = Configuration::get('SNB_SUBSCRIBER_LIST');
+		$url = Configuration::get('SNB_INSTALLATION_PATH') . '/unsubscribe';
 
 		if(!empty($list) && !empty($url))
 		{
@@ -750,12 +786,33 @@ class Sendynewsletter extends Module
 					'boolean' => 'true',
 			);
 
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-			curl_exec($ch);
+			if($this->isCurlActive()) {
+
+				$ch = curl_init();
+				if (Configuration::get('SNB_SELFSIGNED_CERTIFICATE'))
+				{
+					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+				}
+				curl_setopt($ch, CURLOPT_URL, $url);
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+				if (curl_exec($ch))
+					return true;
+				else
+					die(curl_error($ch));
+			}
+			else
+				die('cURL is not installed!');
 		}
+		return false;
+	}
+
+	public function isCurlActive() {
+		if  (in_array  ('curl', get_loaded_extensions()))
+			return true;
+		else
+			return false;
 	}
 
 	/**
@@ -770,10 +827,10 @@ class Sendynewsletter extends Module
 	{
 		if ($email)
 		{
-			if ($discount = Configuration::get('NW_VOUCHER_CODE'))
+			if ($discount = Configuration::get('SNB_VOUCHER_CODE'))
 				$this->sendVoucher($email, $discount);
 
-			if (Configuration::get('NW_CONFIRMATION_EMAIL'))
+			if (Configuration::get('SNB_CONFIRMATION_EMAIL'))
 				$this->sendConfirmationEmail($email);
 		}
 
@@ -816,9 +873,9 @@ class Sendynewsletter extends Module
 	protected function sendVerificationEmail($email, $token)
 	{
 		$verif_url = Context::getContext()->link->getModuleLink(
-			'sendynewsletter', 'verification', array(
-				'token' => $token,
-			)
+				'sendynewsletter', 'verification', array(
+						'token' => $token,
+				)
 		);
 
 		return Mail::Send($this->context->language->id, 'newsletter_verif', Mail::l('Email verification', $this->context->language->id), array('{verif_url}' => $verif_url), $email, null, null, null, null, null, dirname(__FILE__).'/mails/', false, $this->context->shop->id);
@@ -837,23 +894,23 @@ class Sendynewsletter extends Module
 			if ($this->error)
 			{
 				$this->smarty->assign(
-					array(
-						'color' => 'red',
-						'msg' => $this->error,
-						'nw_value' => isset($_POST['email']) ? pSQL($_POST['email']) : false,
-						'nw_error' => true,
-						'action' => $_POST['action']
-					)
+						array(
+								'color' => 'red',
+								'msg' => $this->error,
+								'nw_value' => isset($_POST['email']) ? pSQL($_POST['email']) : false,
+								'nw_error' => true,
+								'action' => $_POST['action']
+						)
 				);
 			}
 			else if ($this->valid)
 			{
 				$this->smarty->assign(
-					array(
-						'color' => 'green',
-						'msg' => $this->valid,
-						'nw_error' => false
-					)
+						array(
+								'color' => 'green',
+								'msg' => $this->valid,
+								'nw_error' => false
+						)
 				);
 			}
 		}
@@ -906,72 +963,89 @@ class Sendynewsletter extends Module
 	public function renderForm()
 	{
 		$fields_form = array(
-			'form' => array(
-				'legend' => array(
-					'title' => $this->l('Settings'),
-					'icon' => 'icon-cogs'
-				),
-				'input' => array(
-					array(
-						'type' => 'text',
-						'label' => $this->l('Sendy installation path'),
-						'name' => 'NW_INSTALLATION_PATH',
-						'class' => 'fixed-width-xxl',
-						'desc' => $this->l('URL address of your Sendy installation')
-					),
-					array(
-						'type' => 'text',
-						'label' => $this->l('Sendy subscriber list'),
-						'name' => 'NW_SUBSCRIBER_LIST',
-						'class' => 'fixed-width-xxl',
-						'desc' => $this->l('The list id where you want to subscribe a user to. This can be found under "View all lists" section named "ID"'),
-					),
-					array(
-						'type' => 'switch',
-						'label' => $this->l('Would you like to send a verification email after subscription?'),
-						'name' => 'NW_VERIFICATION_EMAIL',
-						'values' => array(
-							array(
-								'id' => 'active_on',
-								'value' => 1,
-								'label' => $this->l('Yes')
-							),
-							array(
-								'id' => 'active_off',
-								'value' => 0,
-								'label' => $this->l('No')
-							)
+				'form' => array(
+						'legend' => array(
+								'title' => $this->l('Settings'),
+								'icon' => 'icon-cogs'
 						),
-					),
-					array(
-						'type' => 'switch',
-						'label' => $this->l('Would you like to send a confirmation email after subscription?'),
-						'name' => 'NW_CONFIRMATION_EMAIL',
-						'values' => array(
-							array(
-								'id' => 'active_on',
-								'value' => 1,
-								'label' => $this->l('Yes')
-							),
-							array(
-								'id' => 'active_off',
-								'value' => 0,
-								'label' => $this->l('No')
-							)
+						'input' => array(
+								array(
+										'type' => 'text',
+										'label' => $this->l('Sendy installation path'),
+										'name' => 'SNB_INSTALLATION_PATH',
+										'class' => 'fixed-width-xxl',
+										'desc' => $this->l('URL address of your Sendy installation')
+								),
+								array(
+										'type' => 'text',
+										'label' => $this->l('Sendy subscriber list'),
+										'name' => 'SNB_SUBSCRIBER_LIST',
+										'class' => 'fixed-width-xxl',
+										'desc' => $this->l('The list id where you want to subscribe a user to. This can be found under "View all lists" section named "ID"'),
+								),
+								array(
+										'type' => 'switch',
+										'label' => $this->l('Are you using a self-signed certificate?'),
+										'name' => 'SNB_SELFSIGNED_CERTIFICATE',
+										'values' => array(
+												array(
+														'id' => 'active_on',
+														'value' => 1,
+														'label' => $this->l('Yes')
+												),
+												array(
+														'id' => 'active_off',
+														'value' => 0,
+														'label' => $this->l('No')
+												)
+										),
+								),
+								array(
+										'type' => 'switch',
+										'label' => $this->l('Would you like to send a verification email after subscription?'),
+										'name' => 'SNB_VERIFICATION_EMAIL',
+										'values' => array(
+												array(
+														'id' => 'active_on',
+														'value' => 1,
+														'label' => $this->l('Yes')
+												),
+												array(
+														'id' => 'active_off',
+														'value' => 0,
+														'label' => $this->l('No')
+												)
+										),
+								),
+								array(
+										'type' => 'switch',
+										'label' => $this->l('Would you like to send a confirmation email after subscription?'),
+										'name' => 'SNB_CONFIRMATION_EMAIL',
+										'values' => array(
+												array(
+														'id' => 'active_on',
+														'value' => 1,
+														'label' => $this->l('Yes')
+												),
+												array(
+														'id' => 'active_off',
+														'value' => 0,
+														'label' => $this->l('No')
+												)
+										),
+								),
+								array(
+										'type' => 'text',
+										'label' => $this->l('Welcome voucher code'),
+										'name' => 'SNB_VOUCHER_CODE',
+										'class' => 'fixed-width-md',
+										'desc' => $this->l('Leave blank to disable by default.')
+								),
 						),
-					),
-					array(
-						'type' => 'text',
-						'label' => $this->l('Welcome voucher code'),
-						'name' => 'NW_VOUCHER_CODE',
-						'class' => 'fixed-width-md',
-						'desc' => $this->l('Leave blank to disable by default.')
-					),
+						'submit' => array(
+								'title' => $this->l('Save'),
+						)
 				),
-				'submit' => array(
-					'title' => $this->l('Save'),
-				)
-			),
 		);
 
 		$helper = new HelperForm();
@@ -985,9 +1059,9 @@ class Sendynewsletter extends Module
 		$helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
 		$helper->token = Tools::getAdminTokenLite('AdminModules');
 		$helper->tpl_vars = array(
-			'fields_value' => $this->getConfigFieldsValues(),
-			'languages' => $this->context->controller->getLanguages(),
-			'id_language' => $this->context->language->id
+				'fields_value' => $this->getConfigFieldsValues(),
+				'languages' => $this->context->controller->getLanguages(),
+				'id_language' => $this->context->language->id
 		);
 
 		return $helper->generateForm(array($fields_form));
@@ -1004,73 +1078,73 @@ class Sendynewsletter extends Module
 			$countries_list[] = array('id' => $country['id_country'], 'name' => $country['name']);
 
 		$fields_form = array(
-			'form' => array(
-				'legend' => array(
-					'title' => $this->l('Export customers\' addresses'),
-					'icon' => 'icon-envelope'
+				'form' => array(
+						'legend' => array(
+								'title' => $this->l('Export customers\' addresses'),
+								'icon' => 'icon-envelope'
+						),
+						'input' => array(
+								array(
+										'type' => 'select',
+										'label' => $this->l('Customers\' country'),
+										'desc' => $this->l('Filter customers by country.'),
+										'name' => 'COUNTRY',
+										'required' => false,
+										'default_value' => (int)$this->context->country->id,
+										'options' => array(
+												'query' => $countries_list,
+												'id' => 'id',
+												'name' => 'name',
+										)
+								),
+								array(
+										'type' => 'select',
+										'label' => $this->l('Newsletter subscribers'),
+										'desc' => $this->l('Filter customers who have subscribed to the newsletter or not, and who have an account or not.'),
+										'hint' => $this->l('Customers can subscribe to your newsletter when registering, or by entering their email in the newsletter block.'),
+										'name' => 'SUSCRIBERS',
+										'required' => false,
+										'default_value' => (int)$this->context->country->id,
+										'options' => array(
+												'query' => array(
+														array('id' => 0, 'name' => $this->l('All subscribers')),
+														array('id' => 1, 'name' => $this->l('Subscribers with account')),
+														array('id' => 2, 'name' => $this->l('Subscribers without account')),
+														array('id' => 3, 'name' => $this->l('Non-subscribers'))
+												),
+												'id' => 'id',
+												'name' => 'name',
+										)
+								),
+								array(
+										'type' => 'select',
+										'label' => $this->l('Opt-in subscribers'),
+										'desc' => $this->l('Filter customers who have agreed to receive your partners\' offers or not.'),
+										'hint' => $this->l('Opt-in subscribers have agreed to receive your partners\' offers.'),
+										'name' => 'OPTIN',
+										'required' => false,
+										'default_value' => (int)$this->context->country->id,
+										'options' => array(
+												'query' => array(
+														array('id' => 0, 'name' => $this->l('All customers')),
+														array('id' => 2, 'name' => $this->l('Opt-in subscribers')),
+														array('id' => 1, 'name' => $this->l('Opt-in non-subscribers'))
+												),
+												'id' => 'id',
+												'name' => 'name',
+										)
+								),
+								array(
+										'type' => 'hidden',
+										'name' => 'action',
+								)
+						),
+						'submit' => array(
+								'title' => $this->l('Export .CSV file'),
+								'class' => 'btn btn-default pull-right',
+								'name' => 'submitExport',
+						)
 				),
-				'input' => array(
-					array(
-						'type' => 'select',
-						'label' => $this->l('Customers\' country'),
-						'desc' => $this->l('Filter customers by country.'),
-						'name' => 'COUNTRY',
-						'required' => false,
-						'default_value' => (int)$this->context->country->id,
-						'options' => array(
-							'query' => $countries_list,
-							'id' => 'id',
-							'name' => 'name',
-						)
-					),
-					array(
-						'type' => 'select',
-						'label' => $this->l('Newsletter subscribers'),
-						'desc' => $this->l('Filter customers who have subscribed to the newsletter or not, and who have an account or not.'),
-						'hint' => $this->l('Customers can subscribe to your newsletter when registering, or by entering their email in the newsletter block.'),
-						'name' => 'SUSCRIBERS',
-						'required' => false,
-						'default_value' => (int)$this->context->country->id,
-						'options' => array(
-							'query' => array(
-								array('id' => 0, 'name' => $this->l('All subscribers')),
-								array('id' => 1, 'name' => $this->l('Subscribers with account')),
-								array('id' => 2, 'name' => $this->l('Subscribers without account')),
-								array('id' => 3, 'name' => $this->l('Non-subscribers'))
-							),
-							'id' => 'id',
-							'name' => 'name',
-						)
-					),
-					array(
-						'type' => 'select',
-						'label' => $this->l('Opt-in subscribers'),
-						'desc' => $this->l('Filter customers who have agreed to receive your partners\' offers or not.'),
-						'hint' => $this->l('Opt-in subscribers have agreed to receive your partners\' offers.'),
-						'name' => 'OPTIN',
-						'required' => false,
-						'default_value' => (int)$this->context->country->id,
-						'options' => array(
-							'query' => array(
-								array('id' => 0, 'name' => $this->l('All customers')),
-								array('id' => 2, 'name' => $this->l('Opt-in subscribers')),
-								array('id' => 1, 'name' => $this->l('Opt-in non-subscribers'))
-							),
-							'id' => 'id',
-							'name' => 'name',
-						)
-					),
-					array(
-						'type' => 'hidden',
-						'name' => 'action',
-					)
-				),
-				'submit' => array(
-					'title' => $this->l('Export .CSV file'),
-					'class' => 'btn btn-default pull-right',
-					'name' => 'submitExport',
-				)
-			),
 		);
 
 		$helper = new HelperForm();
@@ -1085,9 +1159,9 @@ class Sendynewsletter extends Module
 		$helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
 		$helper->token = Tools::getAdminTokenLite('AdminModules');
 		$helper->tpl_vars = array(
-			'fields_value' => $this->getConfigFieldsValues(),
-			'languages' => $this->context->controller->getLanguages(),
-			'id_language' => $this->context->language->id
+				'fields_value' => $this->getConfigFieldsValues(),
+				'languages' => $this->context->controller->getLanguages(),
+				'id_language' => $this->context->language->id
 		);
 
 		return $helper->generateForm(array($fields_form));
@@ -1095,26 +1169,26 @@ class Sendynewsletter extends Module
 
 	public function renderSearchForm()
 	{
-				$fields_form = array(
-			'form' => array(
-				'legend' => array(
-					'title' => $this->l('Search for addresses'),
-					'icon' => 'icon-search'
+		$fields_form = array(
+				'form' => array(
+						'legend' => array(
+								'title' => $this->l('Search for addresses'),
+								'icon' => 'icon-search'
+						),
+						'input' => array(
+								array(
+										'type' => 'text',
+										'label' => $this->l('Email address to search'),
+										'name' => 'searched_email',
+										'class' => 'fixed-width-xxl',
+										'desc' => $this->l('Example: contact@prestashop.com or @prestashop.com')
+								),
+						),
+						'submit' => array(
+								'title' => $this->l('Search'),
+								'icon' => 'process-icon-refresh',
+						)
 				),
-				'input' => array(
-					array(
-						'type' => 'text',
-						'label' => $this->l('Email address to search'),
-						'name' => 'searched_email',
-						'class' => 'fixed-width-xxl',
-						'desc' => $this->l('Example: contact@prestashop.com or @prestashop.com')
-					),
-				),
-				'submit' => array(
-					'title' => $this->l('Search'),
-					'icon' => 'process-icon-refresh',
-				)
-			),
 		);
 
 		$helper = new HelperForm();
@@ -1124,9 +1198,9 @@ class Sendynewsletter extends Module
 		$helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
 		$helper->token = Tools::getAdminTokenLite('AdminModules');
 		$helper->tpl_vars = array(
-			'fields_value' => array('searched_email' => $this->_searched_email),
-			'languages' => $this->context->controller->getLanguages(),
-			'id_language' => $this->context->language->id
+				'fields_value' => array('searched_email' => $this->_searched_email),
+				'languages' => $this->context->controller->getLanguages(),
+				'id_language' => $this->context->language->id
 		);
 
 		return $helper->generateForm(array($fields_form));
@@ -1135,15 +1209,16 @@ class Sendynewsletter extends Module
 	public function getConfigFieldsValues()
 	{
 		return array(
-			'NW_VERIFICATION_EMAIL' => Tools::getValue('NW_VERIFICATION_EMAIL', Configuration::get('NW_VERIFICATION_EMAIL')),
-			'NW_CONFIRMATION_EMAIL' => Tools::getValue('NW_CONFIRMATION_EMAIL', Configuration::get('NW_CONFIRMATION_EMAIL')),
-			'NW_INSTALLATION_PATH' => Tools::getValue('NW_INSTALLATION_PATH', Configuration::get('NW_INSTALLATION_PATH')),
-			'NW_SUBSCRIBER_LIST' => Tools::getValue('NW_SUBSCRIBER_LIST', Configuration::get('NW_SUBSCRIBER_LIST')),
-			'NW_VOUCHER_CODE' => Tools::getValue('NW_VOUCHER_CODE', Configuration::get('NW_VOUCHER_CODE')),
-			'COUNTRY' => Tools::getValue('COUNTRY'),
-			'SUSCRIBERS' => Tools::getValue('SUSCRIBERS'),
-			'OPTIN' => Tools::getValue('OPTIN'),
-			'action' => 'customers',
+				'SNB_VERIFICATION_EMAIL' => Tools::getValue('SNB_VERIFICATION_EMAIL', Configuration::get('SNB_VERIFICATION_EMAIL')),
+				'SNB_CONFIRMATION_EMAIL' => Tools::getValue('SNB_CONFIRMATION_EMAIL', Configuration::get('SNB_CONFIRMATION_EMAIL')),
+				'SNB_SELFSIGNED_CERTIFICATE' => Tools::getValue('SNB_SELFSIGNED_CERTIFICATE', Configuration::get('SNB_SELFSIGNED_CERTIFICATE')),
+				'SNB_INSTALLATION_PATH' => Tools::getValue('SNB_INSTALLATION_PATH', Configuration::get('SNB_INSTALLATION_PATH')),
+				'SNB_SUBSCRIBER_LIST' => Tools::getValue('SNB_SUBSCRIBER_LIST', Configuration::get('SNB_SUBSCRIBER_LIST')),
+				'SNB_VOUCHER_CODE' => Tools::getValue('SNB_VOUCHER_CODE', Configuration::get('SNB_VOUCHER_CODE')),
+				'COUNTRY' => Tools::getValue('COUNTRY'),
+				'SUSCRIBERS' => Tools::getValue('SUSCRIBERS'),
+				'OPTIN' => Tools::getValue('OPTIN'),
+				'action' => 'customers',
 		);
 	}
 
@@ -1166,15 +1241,15 @@ class Sendynewsletter extends Module
 					$this->myFputCsv($fd, $tab);
 				fclose($fd);
 				$this->_html .= $this->displayConfirmation(
-					sprintf($this->l('The .CSV file has been successfully exported: %d customers found.'), $nb).'<br />
+						sprintf($this->l('The .CSV file has been successfully exported: %d customers found.'), $nb).'<br />
 				<a href="'.$this->context->shop->getBaseURI().'modules/blocknewsletter/'.Tools::safeOutput(strval(Tools::getValue('action'))).'_'.$this->file.'">
 				<b>'.$this->l('Download the file').' '.$this->file.'</b>
 				</a>
 				<br />
 				<ol style="margin-top: 10px;">
 					<li style="color: red;">'.
-					$this->l('WARNING: When opening this .csv file with Excel, choose UTF-8 encoding to avoid strange characters.').
-					'</li>
+						$this->l('WARNING: When opening this .csv file with Excel, choose UTF-8 encoding to avoid strange characters.').
+						'</li>
 				</ol>');
 			}
 			else
