@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
 	<name>sendynewsletter</name>
-	<displayName><![CDATA[Newsletter block]]></displayName>
-	<version><![CDATA[2.3.1]]></version>
-	<description><![CDATA[Adds a block for newsletter subscription.]]></description>
-	<author><![CDATA[PrestaShop]]></author>
+	<displayName><![CDATA[Sendy newsletter block]]></displayName>
+	<version><![CDATA[1.0.0]]></version>
+	<description><![CDATA[Adds a block for newsletter subscription with Sendy support.]]></description>
+	<author><![CDATA[Hélder Pestana]]></author>
 	<tab><![CDATA[front_office_features]]></tab>
 	<confirmUninstall><![CDATA[Are you sure that you want to delete all of your contacts?]]></confirmUninstall>
 	<is_configurable>1</is_configurable>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
 	<name>sendynewsletter</name>
-	<displayName><![CDATA[Bloco newsletter]]></displayName>
-	<version><![CDATA[2.3.1]]></version>
-	<description><![CDATA[Adiciona um bloco para subscri&ccedil;&atilde;o da newsletter. Permite tamb&eacute;m oferecer um vale de desconto para quem subscrever a newsletter.]]></description>
-	<author><![CDATA[PrestaShop]]></author>
+	<displayName><![CDATA[Sendy - Bloco newsletter]]></displayName>
+	<version><![CDATA[1.0.0]]></version>
+	<description><![CDATA[Adiciona um bloco para subscri&ccedil;&atilde;o da newsletter com suporte para o Sendy. Permite tamb&eacute;m oferecer um vale de desconto para quem subscrever a newsletter.]]></description>
+	<author><![CDATA[Hélder Pestana]]></author>
 	<tab><![CDATA[front_office_features]]></tab>
 	<confirmUninstall><![CDATA[Tem a certeza que deseja apagar todos os seus contactos?]]></confirmUninstall>
 	<is_configurable>1</is_configurable>

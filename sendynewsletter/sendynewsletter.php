@@ -147,8 +147,22 @@ class Sendynewsletter extends Module
 		{
 			Configuration::updateValue('NW_CONFIRMATION_EMAIL', (bool)Tools::getValue('NW_CONFIRMATION_EMAIL'));
 			Configuration::updateValue('NW_VERIFICATION_EMAIL', (bool)Tools::getValue('NW_VERIFICATION_EMAIL'));
-			Configuration::updateValue('NW_INSTALLATION_PATH', (bool)Tools::getValue('NW_INSTALLATION_PATH'));
-			Configuration::updateValue('NW_SUBSCRIBER_LIST', (bool)Tools::getValue('NW_SUBSCRIBER_LIST'));
+
+			$installation = Tools::getValue('NW_INSTALLATION_PATH');
+			if (empty($installation) && !Validate::isAbsoluteUrl($installation))
+				$this->_html .= $this->displayError($this->l('Invalid installation url'));
+			else
+			{
+				Configuration::updateValue('NW_INSTALLATION_PATH', (bool)Tools::getValue('NW_INSTALLATION_PATH'));
+			}
+
+			$list = Tools::getValue('NW_SUBSCRIBER_LIST');
+			if (empty($list) && !Validate::isGenericName($list))
+				$this->_html .= $this->displayError($this->l('Invalid list'));
+			else
+			{
+				Configuration::updateValue('NW_SUBSCRIBER_LIST', (bool)Tools::getValue('NW_SUBSCRIBER_LIST'));
+			}
 
 			$voucher = Tools::getValue('NW_VOUCHER_CODE');
 			if ($voucher && !Validate::isDiscountName($voucher))
@@ -479,7 +493,7 @@ class Sendynewsletter extends Module
 
 		if (!isset($sql) || !Db::getInstance()->execute($sql))
 			return false;
-
+		$this->sendyListUnsubscribe($email);
 		return true;
 	}
 
@@ -497,7 +511,9 @@ class Sendynewsletter extends Module
 				WHERE `email` = \''.pSQL($email).'\'
 				AND id_shop = '.$this->context->shop->id;
 
-		return Db::getInstance()->execute($sql);
+		return Db::getInstance()->execute($sql) && $this->sendyListSubscribeUser($email);
+
+
 	}
 
 	/**
@@ -526,12 +542,13 @@ class Sendynewsletter extends Module
 				'.(int)$active.'
 				)';
 
-		return Db::getInstance()->execute($sql);
+		return Db::getInstance()->execute($sql) && $this->sendyListSubscribeGuest($email, $active);
 	}
 
 
 	public function activateGuest($email)
 	{
+		$this->sendyActivateUser($email);
 		return Db::getInstance()->execute(
 			'UPDATE `'._DB_PREFIX_.'sendynewsletter`
 						SET `active` = 1
@@ -627,6 +644,120 @@ class Sendynewsletter extends Module
 		return $this->l('Thank you for subscribing to our newsletter.');
 	}
 
+	public function sendyActivateUser($email)
+	{
+		$list = Configuration::get('NW_SUBSCRIBER_LIST');
+		$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+
+		if(!empty($list) && !empty($url))
+		{
+			$list = Configuration::get('NW_SUBSCRIBER_LIST');
+			$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+
+			$data = array(
+					'list' => $list,
+					'email' => $email,
+					'boolean' => 'true',
+			);
+
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+			curl_exec($ch);
+		}
+	}
+
+	/**
+	 * Subscribes a user to the defined Sendy list
+	 *
+	 * @param $email the user email
+	 * @param $active specifies if the user is active
+	 */
+
+	public function sendyListSubscribeUser($email, $active = true)
+	{
+		$list = Configuration::get('NW_SUBSCRIBER_LIST');
+		$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+
+		if(!empty($list) && !empty($url))
+		{
+			$sql = 'SELECT CONCAT_WS (`firstname`,` `,`lastname`) AS fullname
+				FROM `' . _DB_PREFIX_ . 'customer`
+				WHERE `email` = ' . pSQL($email);
+
+			$fullname = Db::getInstance()->getValue($sql);
+
+			$data = array(
+					'list' => $list,
+					'name' => $fullname,
+					'email' => $email,
+					'boolean' => $active,
+			);
+
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+			curl_exec($ch);
+		}
+	}
+
+	/**
+	 * Subscribes a guest user to the defined Sendy list
+	 *
+	 * @param $email the user email
+	 * @param $active specifies if the user is active
+	 */
+
+	public function sendyListSubscribeGuest($email,  $active = true)
+	{
+
+		$list = Configuration::get('NW_SUBSCRIBER_LIST');
+		$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+
+		if(!empty($list) && !empty($url))
+		{
+			$list = Configuration::get('NW_SUBSCRIBER_LIST');
+			$url = Configuration::get('NW_INSTALLATION_PATH') . '/subscribe';
+
+			$data = array(
+					'list' => $list,
+					'email' => $email,
+					'boolean' => $active,
+			);
+
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+			curl_exec($ch);
+		}
+
+	}
+
+	public function sendyListUnsubscribe($email)
+	{
+		$list = Configuration::get('NW_SUBSCRIBER_LIST');
+		$url = Configuration::get('NW_INSTALLATION_PATH') . '/unsubscribe';
+
+		if(!empty($list) && !empty($url))
+		{
+
+			$data = array(
+					'list' => $list,
+					'email' => $email,
+					'boolean' => 'true',
+			);
+
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+			curl_exec($ch);
+		}
+	}
+
 	/**
 	 * Send the confirmation mails to the given $email address if needed.
 	 *
@@ -645,6 +776,8 @@ class Sendynewsletter extends Module
 			if (Configuration::get('NW_CONFIRMATION_EMAIL'))
 				$this->sendConfirmationEmail($email);
 		}
+
+
 	}
 
 	/**
