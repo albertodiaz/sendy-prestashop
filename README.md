@@ -1,18 +1,16 @@
 Sendy Prestashop newsletter module
 =============
 
-This module is compatible with Prestashop 1.5+ (tested on 1.5.6).
+This module is compatible with Prestashop 1.6+ (tested on 1.6.5).
 
-This is a module simmilar in apperance to Prestashop's native newsletter module. The big difference is that this module saves subscribers directly to your Sendy instalation.
+This module is based on Prestashop's block newsletter module, modified to include the possibility of automatically subscribing users to a given Sendy newsletter. It retains all the functionality of the default newsletter module.
 
-Module can be hooked either to the left or the right column, it uses a combination of AJAX and PHP curl to smoothly add a subscriber to the list and provide feedback, but also falls back gracefully if user happens to have JavaScript disabled.
+It uses a combination of AJAX and PHP curl to smoothly add a subscriber to the list and provide feedback.
 
 Features
 ---------
 
 * AJAX powered sign up form
-* You can choose to ask the subscriber to provide their name or not and make it optional or required
-* You can collect the subscribers IP addreses, as they might be required by local law
 * Sendy installation does not have to be on the same server
 
 Set up requirements
